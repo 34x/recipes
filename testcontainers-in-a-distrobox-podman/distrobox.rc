@@ -1,0 +1,2 @@
+export DOCKER_HOST=unix:///run/host${XDG_RUNTIME_DIR}/podman/podman.sock
+export TESTCONTAINERS_RYUK_DISABLED=true
