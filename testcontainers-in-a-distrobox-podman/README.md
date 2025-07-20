@@ -8,8 +8,9 @@ podman build -f console.containerfile --tag test-containers-in-container
 distrobox create --name testcontainers --image test-containers-in-container
 
 # ensure podman.socket service is running
-# it will be used from inside the distrobox
-systemctl --user start podman
+# it will be used from inside distrobox
+# to access container runtime
+systemctl --user start podman.socket
 
 # enter distrobox container
 distrobox enter testcontainers
