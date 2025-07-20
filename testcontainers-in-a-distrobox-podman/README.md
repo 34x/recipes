@@ -15,9 +15,6 @@ systemctl --user start podman.socket
 # enter distrobox container
 distrobox enter testcontainers
 
-# inside distrobox in the same folder as this project
-# it will setup environment variables
-source ./distrobox.rc
 
 # then usual npm stuff
 
