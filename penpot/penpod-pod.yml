@@ -1,0 +1,126 @@
+# Short README
+#
+# Run for the first time:
+# podman kube play penpot-pod.yml
+#
+# Open http://localhost:9001 in your browser (it should work after about 30 seconds)
+#
+# To stop
+# podman pod stop penpot
+#
+# To run it again (with all the data from the previous start preserved)
+# podman pod start penpot
+#
+# If you want to start from scratch (remove all the users and files) use:
+#
+# podman pod stop penpot
+# podman pod rm penpot
+# podman kube play penpot-pod.yml
+#
+# Created with podman-5.5.2
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: penpot
+spec:
+  containers:
+  - name: frontend
+    image: docker.io/penpotapp/frontend:latest
+    args:
+    - nginx
+    - -g
+    - daemon off;
+    env:
+    - name: PENPOT_HTTP_SERVER_MAX_BODY_SIZE
+      value: "31457280"
+    - name: PENPOT_HTTP_SERVER_MAX_MULTIPART_BODY_SIZE
+      value: "367001600"
+    - name: PENPOT_FLAGS
+      value: disable-email-verification disable-smtp disable-prepl-server disable-secure-session-cookies enable-demo-users disable-secure-session-cookies
+    ports:
+    - containerPort: 8080
+      hostPort: 9001
+    #volumeMounts:
+    #- mountPath: /opt/data/assets
+    #  name: penpot-assets-pvc
+
+  - name: backend
+    image: docker.io/penpotapp/backend:latest
+    env:
+    - name: PENPOT_HTTP_SERVER_MAX_MULTIPART_BODY_SIZE
+      value: "367001600"
+    - name: PENPOT_DATABASE_URI
+      value: postgresql://postgres:5432/penpot
+    - name: PENPOT_ASSETS_STORAGE_BACKEND
+      value: assets-fs
+    - name: PENPOT_DATABASE_PASSWORD
+      value: penpot
+    - name: PENPOT_SMTP_DEFAULT_REPLY_TO
+      value: no-reply@example.com
+    - name: PENPOT_SMTP_DEFAULT_FROM
+      value: no-reply@example.com
+    - name: PENPOT_SMTP_PORT
+      value: "1025"
+    - name: PENPOT_DATABASE_USERNAME
+      value: penpot
+    - name: PENPOT_REDIS_URI
+      value: redis://valkey/0
+    - name: PENPOT_STORAGE_ASSETS_FS_DIRECTORY
+      value: /opt/data/assets
+    - name: PENPOT_SMTP_HOST
+      value: penpot-mailcatch
+    - name: PENPOT_HTTP_SERVER_MAX_BODY_SIZE
+      value: "31457280"
+    - name: PENPOT_PUBLIC_URI
+      value: http://localhost:9001
+    - name: PENPOT_FLAGS
+      value: disable-email-verification disable-smtp disable-prepl-server disable-secure-session-cookies enable-demo-users disable-secure-session-cookies
+    #volumeMounts:
+    #- mountPath: /opt/data/assets
+    #  name: penpot-assets-pvc
+
+
+  - name: postgres
+    image: docker.io/library/postgres:15
+    env:
+    - name: POSTGRES_PASSWORD
+      value: penpot
+    - name: POSTGRES_INITDB_ARGS
+      value: --data-checksums
+    - name: POSTGRES_DB
+      value: penpot
+    - name: POSTGRES_USER
+      value: penpot
+    #volumeMounts:
+    #- mountPath: /var/lib/postgresql/data
+    #  name: penpot-postgres-v15-pvc
+
+  - name: valkey
+    image: docker.io/valkey/valkey:8.1
+
+  - name: exporter
+    image: docker.io/penpotapp/exporter:latest
+    env:
+    - name: PENPOT_REDIS_URI
+      value: redis://valkey/0
+    - name: PENPOT_PUBLIC_URI
+      value: http://frontend:8080
+
+  - name: mailcatch
+    image: docker.io/sj26/mailcatcher:latest
+    args:
+    - --ip
+    - 0.0.0.0
+    ports:
+    - containerPort: 1080
+      hostPort: 1080
+
+  #volumes:
+  #- name: penpot-assets-pvc
+  #  persistentVolumeClaim:
+  #    claimName: penpot-assets
+  #- name: penpot-postgres-v15-pvc
+  #  persistentVolumeClaim:
+  #    claimName: penpot-postgres-v15
+
